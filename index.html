@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#a63d3d" />
+  <meta name="description" content="Roteiro leve e offline para explorar a Liberdade." />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>Liberdade, vamos?</title>
+</head>
+<body>
+  <a class="skip" href="#main">Pular para o conteúdo</a>
+  <header class="topbar"><div><p class="eyebrow">São Paulo · sábado</p><h1>Liberdade, vamos?</h1></div><button class="icon-button" id="shareDay" aria-label="Compartilhar roteiro">↗</button></header>
+  <main id="main" tabindex="-1"></main>
+  <nav class="bottom-nav" aria-label="Navegação principal">
+    <button data-view="itinerary" class="active"><span>▤</span>Roteiro</button>
+    <button data-view="explore"><span>⌕</span>Explorar</button>
+    <button data-view="map"><span>◉</span>Mapa</button>
+    <button data-view="saved"><span>♡</span>Salvos</button>
+  </nav>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <dialog id="placeDialog"><article id="dialogContent"></article></dialog>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
