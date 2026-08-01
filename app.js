@@ -5,6 +5,9 @@ const today = new Date();
 let data, view = 'itinerary', map, markers = [], position = null;
 const state = JSON.parse(localStorage.getItem('liberdade-state') || '{"plan":[],"favorites":[],"visited":[],"notes":{},"coords":{},"durations":{}}');
 if (!state.durations) state.durations = {};
+// dayStart/dayEnd are stored as "HH:MM" strings; null means "use data.json default"
+const dayStart = () => state.dayStart || (data?.day.start) || '11:00';
+const dayEnd   = () => state.dayEnd   || (data?.day.end)   || '17:00';
 const save = () => localStorage.setItem('liberdade-state', JSON.stringify(state));
 const mins = h => { const m=/([01]?\d|2[0-3]):([0-5]\d)/.exec(h||''); return m ? +m[1]*60 + +m[2] : null; };
 const clock = m => `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
@@ -53,7 +56,7 @@ function travel(a,b){
 }
 
 function conflicts(){
-  let t=mins(data.day.start), issues=[];
+  let t=mins(dayStart()), issues=[];
   for(const id of state.plan){
     const p=getPlace(id);
     const dur=getDuration(p);
@@ -65,13 +68,12 @@ function conflicts(){
 
 function timelineItems(){
   const fixed=data.fixedEvents[0], before=[],after=[];
-  let t=mins(data.day.start);
+  let t=mins(dayStart());
   for(const id of state.plan){
     const p=getPlace(id);
     const dur=getDuration(p);
     const next=t+dur;
-    // Walk time to next
-    const walkMins=8; // will be resolved in render with travel()
+    const walkMins=8;
     if(next<=mins(fixed.start)) before.push({p,start:t,dur});
     else after.push({p,start:null,dur});
     t=next+walkMins;
@@ -109,14 +111,28 @@ function placeCard(p, compact=false){
 function renderItinerary(){
   const {before,fixed,after,end}=timelineItems();
   const issues=conflicts();
-  const available=mins(data.day.end)-mins(data.day.start);
+  const ds=dayStart(), de=dayEnd();
+  const available=mins(de)-mins(ds);
   const usedMins=state.plan.reduce((n,id)=>n+getDuration(getPlace(id))+8,60);
+  const isDefaultWindow = !state.dayStart && !state.dayEnd;
 
-  let html=header('Seu roteiro','11h–17h · sábado','<span class="pill">sem cadastro</span>');
+  let html=header('Seu roteiro',`${ds.replace(':','h')} – ${de.replace(':','h')} · sábado`,'<span class="pill">sem cadastro</span>');
+
+  // Time window editor
+  html+=`<div class="time-window">
+    <span class="time-window-label">Janela do dia</span>
+    <div class="time-window-inputs">
+      <label>De <input type="time" id="editDayStart" value="${ds}" class="time-input"></label>
+      <span class="time-sep">→</span>
+      <label>Até <input type="time" id="editDayEnd" value="${de}" class="time-input"></label>
+      ${!isDefaultWindow?`<button class="button small ghost" id="resetWindow">Restaurar</button>`:''}
+    </div>
+  </div>`;
+
   html+=`<section class="summary-grid">
     <div class="metric"><b>${state.plan.length}</b><span>paradas</span></div>
     <div class="metric"><b>${Math.max(0,available-usedMins)} min</b><span>livres (estimado)</span></div>
-    <div class="metric"><b>${clock(Math.min(end,mins(data.day.end)))}</b><span>término previsto</span></div>
+    <div class="metric"><b>${clock(Math.min(end,mins(de)))}</b><span>término previsto</span></div>
     <div class="metric"><b>${issues.length}</b><span>alertas</span></div>
   </section>`;
   html+=`<div class="notice"><strong>Compromisso fixo.</strong> Karaokê Kampai das 14h às 15h. Ele nunca é movido pela sugestão de rota.</div>`;
@@ -349,7 +365,7 @@ function suggest(){
   const unfixed=state.plan.map(getPlace);
   if(unfixed.length<2){toast('Adicione pelo menos dois locais para sugerir uma sequência.');return}
   const fixedStart=mins(data.fixedEvents[0].start);
-  let pre=[],post=[],t=mins(data.day.start);
+  let pre=[],post=[],t=mins(dayStart());
   [...unfixed].sort((a,b)=>getDuration(a)-getDuration(b)).forEach(p=>{
     if(t+getDuration(p)+8<=fixedStart){pre.push(p);t+=getDuration(p)+8}
     else post.push(p)
@@ -406,6 +422,11 @@ function bind(){
       showDetails(id);
       toast('Tempo restaurado ao padrão.');
     }
+    if(e.target.id==='resetWindow'){
+      delete state.dayStart; delete state.dayEnd;
+      save(); renderItinerary();
+      toast('Horários restaurados ao padrão.');
+    }
   };
 
   main.addEventListener('click',clicks);
@@ -422,6 +443,18 @@ function bind(){
         if(val>=5&&val<=240){state.durations[id]=val;save();renderItinerary();toast(`Tempo ajustado: ${val} min`);}
       },600);
       return;
+    }
+    if(e.target.id==='editDayStart'){
+      const v=e.target.value;
+      if(v && v < (state.dayEnd||data.day.end||'17:00')){
+        state.dayStart=v; save(); renderItinerary();
+      }
+    }
+    if(e.target.id==='editDayEnd'){
+      const v=e.target.value;
+      if(v && v > (state.dayStart||data.day.start||'11:00')){
+        state.dayEnd=v; save(); renderItinerary();
+      }
     }
     if(e.target.id==='query'){
       main.dataset.q=e.target.value;
