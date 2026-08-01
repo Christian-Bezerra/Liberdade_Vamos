@@ -14,3 +14,12 @@
 
 /* ── Search fix: ensure LTR and correct icon position ── */
 .search input{direction:ltr;text-align:left}
+
+/* ── Day time-window editor ── */
+.time-window{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:14px;padding:11px 14px;margin-bottom:13px}
+.time-window-label{font-size:.76rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);flex:0 0 auto}
+.time-window-inputs{display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1}
+.time-window-inputs label{font-size:.84rem;color:var(--muted);display:flex;align-items:center;gap:5px}
+.time-input{height:36px;border:1px solid var(--line);border-radius:9px;padding:0 8px;font-size:.9rem;font-weight:700;background:#fffdf9;color:var(--ink);width:108px}
+.time-input:focus{outline:3px solid #4b83bd;border-color:#4b83bd}
+.time-sep{color:var(--muted);font-size:1rem}
